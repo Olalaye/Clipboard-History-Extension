@@ -42,5 +42,16 @@ export const db = {
       request.onsuccess = () => resolve(request.result);
       request.onerror = (e) => reject(e);
     });
+  },
+
+  async deleteItem(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = (e) => reject(e);
+    });
   }
 };
