@@ -1,5 +1,17 @@
 <script>
+  import { onMount } from 'svelte';
+  import { db } from '../lib/db.js';
+
   let clipboardHistory = [];
+
+  onMount(async () => {
+    try {
+      clipboardHistory = await db.getAllItems();
+      clipboardHistory.sort((a, b) => b.timestamp - a.timestamp);
+    } catch (error) {
+      console.error('获取剪贴板历史记录失败:', error);
+    }
+  });
 </script>
 
 <main>
