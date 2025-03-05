@@ -1,21 +1,83 @@
 import { db } from '../lib/db.js';
 
-// 监听剪贴板变化
-async function monitorClipboard() {
-  let lastContent = '';
-  
-  setInterval(async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text && text !== lastContent) {
-        lastContent = text;
-        await saveClipboardContent('text', text);
-      }
-    } catch (error) {
-      console.error('Failed to read clipboard:', error);
+// Initialize clipboard monitoring
+function monitorClipboard() {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (tab && !tab.url.startsWith('chrome://')) {
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          // Request clipboard permission when document is focused
+          document.addEventListener('focus', async () => {
+            try {
+              const text = await navigator.clipboard.readText();
+              if (text) {
+                chrome.runtime.sendMessage({
+                  type: 'CLIPBOARD_CHANGE',
+                  data: text
+                });
+              }
+            } catch (error) {
+              console.error('Failed to read clipboard:', error);
+            }
+          });
+
+          // Also try to read when the page is already focused
+          if (document.hasFocus()) {
+            navigator.clipboard.readText().then(text => {
+              if (text) {
+                chrome.runtime.sendMessage({
+                  type: 'CLIPBOARD_CHANGE',
+                  data: text
+                });
+              }
+            }).catch(error => {
+              console.error('Failed to read clipboard:', error);
+            });
+          }
+        }
+      });
     }
-  }, 1000);
+  });
 }
+
+// Listen for installation
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('Extension installed');
+  monitorClipboard();
+});
+
+// Listen for tab activation
+chrome.tabs.onActivated.addListener(() => {
+  monitorClipboard();
+});
+
+// Listen for messages
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message === 'save_clipboard') {
+    monitorClipboard();
+  }
+});
+
+// 定期检查剪贴板
+setInterval(monitorClipboard, 1000);
+
+// Listen for commands
+if (chrome.commands) {
+  chrome.commands.onCommand.addListener((command) => {
+    if (command === 'save_clipboard') {
+      monitorClipboard();
+    }
+  });
+}
+
+// Initialize extension
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === 'install') {
+    console.log('Extension installed');
+  }
+});
 
 // 保存剪贴板内容
 async function saveClipboardContent(type, content) {

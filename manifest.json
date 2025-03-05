@@ -3,7 +3,17 @@
     "name": "Clipboard History Pro",
     "version": "1.0",
     "description": "A powerful clipboard history manager for Chrome",
-    "permissions": ["clipboardRead", "storage", "activeTab"],
+    "permissions": [
+      "clipboardRead",
+      "storage",
+      "activeTab",
+      "scripting",
+      "commands",
+      "tabs"
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ],
     "background": {
       "service_worker": "service-worker.js",
       "type": "module"
