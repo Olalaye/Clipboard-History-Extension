@@ -10,7 +10,8 @@ const copyFiles = () => {
       // Create directories if they don't exist
       const dirs = [
         'dist', 
-        'dist/icons'
+        'dist/icons',
+        'dist/assets'
       ];
       dirs.forEach(dir => {
         if (!fs.existsSync(dir)) {
@@ -50,7 +51,7 @@ export default defineConfig({
       output: {
         entryFileNames: `[name].js`,
         chunkFileNames: `assets/[name].[hash].js`,
-        assetFileNames: `assets/[name].[ext]`
+        assetFileNames: `[name].[ext]`
       }
     },
     emptyOutDir: true

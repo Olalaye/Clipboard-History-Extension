@@ -1,3 +1,4 @@
+import './style.css';
 import App from './App.svelte';
 import { db } from '../lib/db.js';
 
