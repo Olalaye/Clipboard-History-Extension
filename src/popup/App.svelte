@@ -14,15 +14,33 @@
       // 从storage中获取自动保存设置
       const result = await chrome.storage.local.get(['autoSave']);
       autoSave = result.autoSave !== false;
+      console.log('storage autoSave:', autoSave);
     } catch (error) {
       console.error('获取剪贴板历史记录失败:', error);
     }
   });
 
   async function toggleAutoSave() {
-    autoSave = !autoSave;
-    await chrome.storage.local.set({ autoSave });
-    chrome.runtime.sendMessage({ type: 'TOGGLE_AUTO_SAVE', data: autoSave });
+    try {
+      // 获取当前checkbox的值，而不是使用autoSave变量
+      const newState = !autoSave;
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: 'TOGGLE_AUTO_SAVE', data: newState }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else if (!response || !response.success) {
+            reject(new Error(response?.error || '切换自动保存失败'));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      if (response.success) {
+        autoSave = newState;
+      }
+    } catch (error) {
+      console.error('切换自动保存失败:', error);
+    }
   }
 
   async function deleteItem(item) {
@@ -52,7 +70,7 @@
         <label class="flex items-center cursor-pointer text-sm text-gray-600 hover:text-gray-800 transition-colors group relative">
           <input 
             type="checkbox" 
-            bind:checked={autoSave} 
+            checked={autoSave} 
             on:change={toggleAutoSave} 
             class="peer sr-only"
           >

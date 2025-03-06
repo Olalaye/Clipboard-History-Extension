@@ -124,11 +124,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'TOGGLE_AUTO_SAVE') {
     console.log('切换自动保存设置:', message.data);
     // 更新自动保存状态
-    chrome.storage.local.set({ autoSave: message.data }).then(() => {
-      sendResponse({ success: true });
-    }).catch(error => {
-      sendResponse({ success: false, error: error.message });
-    });
+    chrome.storage.local.set({ autoSave: message.data })
+      .then(() => {
+        console.log('自动保存设置已更新');
+        sendResponse({ success: true });
+      })
+      .catch(error => {
+        console.error('更新自动保存设置失败:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // 保持消息通道开放
   } else if (message === 'save_clipboard') {
     monitorClipboard();
     sendResponse({ success: true });
